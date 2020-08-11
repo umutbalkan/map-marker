@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <!-- jQuery + Bootstrap JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css">
+    <style>
+        /* Set the size of the div element that contains the map */
+        #map {
+            height: 400px;
+            /* The height is 400 pixels */
+            width: 100%;
+            /* The width is the width of the web page */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5" style="max-width: 500px">
+        <script>
+            var latitude = 47.619144;
+            var longitude = -122.281720;
+            var uluru = 0;
+            var map = 0;
+            var marker = 0;
+        </script>
+        <h3 class="text-center mb-5">Fun Stuff with Google Maps</h3>
+        <div class="form-group">
+            <!--The div element for the map -->
+            <div id="map"></div>
+            <script>
+                // Initialize and add the map
+                function initMap() {
+                    // The location of Uluru
+                    uluru = { lat: latitude, lng: longitude };
+                    // The map, centered at Uluru
+                    map = new google.maps.Map(
+                        document.getElementById('map'), { zoom: 14, center: uluru });
+                    // The marker, positioned at Uluru
+                    marker = new google.maps.Marker({ position: uluru, map: map });
+                }
+            </script>
+            <script defer
+                src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD51Uv_89ZJVOIJICOiah4YI3guPpgVZDA&callback=initMap">
+            </script>
+            <br>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">Latitude &nbsp&nbsp</span>
+                </div>
+                <input type="text" class="form-control" id="lat" name="lat" placeholder="47.619144" value="">
+            </div>
+            <br>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">Longitude</span>
+                </div>
+                <input type="text" type="text" class="form-control" id="lon" name="lon" placeholder="-122.281720" value="">
+            </div>
+           <br>
+           <br>
+            <div class="btn-toolbar justify-content-lg-around" role="toolbar">
+                <div class="btn-group mr-2" role="group" aria-label="First group">
+                    <button onclick="myFunction()" class="btn btn-info btn-lg " name="send" id="send"><i
+                            class="fas fa-map-marked-alt"> Mark</i></button>
+                </div>
+                <div class="btn-group mr-2" role="group" aria-label="Second group">
+                    <button onclick="getLocation()" class="btn btn-primary btn-lg btn-success " name="geolocation"
+                        id="geolocation"><i class="fas fa-map-marker-alt"> Geolocation</i></button>
+                </div>
+            </div>
+        </div>
+        <script>
+            function myFunction() {
+                // To remove the marker from the map
+                marker.setMap(null);
+                var x = document.getElementById("frm1");
+                latitude = parseFloat(document.getElementById("lat").value);
+                longitude = parseFloat(document.getElementById("lon").value);
+                console.log("lat: ", latitude, " lon: ", longitude);
+
+                initMap();
+            }
+        </script>
+
+        <script>
+            function getLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(showPosition);
+                } else {
+                    x.innerHTML = "Geolocation is not supported by this browser.";
+                }
+            }
+
+            function showPosition(position) {
+                latitude = position.coords.latitude;
+                longitude = position.coords.longitude;
+                document.getElementById("lat").value = latitude;
+                document.getElementById("lon").value = longitude;
+                initMap();
+            }
+        </script>
+    </div>
+</body>
+
+</html>
