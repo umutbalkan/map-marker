@@ -28,6 +28,7 @@
         var geocoder;
         var infowindow;
 
+
         $('#main').submit(function () {
             return false;
         });
@@ -97,39 +98,32 @@
                 }
             });
 
-            // when dragend, show new lat and lon in console
-            google.maps.event.addListener(marker, 'dragend', function () {
-                uluru = marker.getPosition();
-
-                geocoder.geocode({ location: uluru }, (results, status) => {
-                    if (status === "OK") {
-                        if (results[0]) {
-                            map.setZoom(11);
-                            console.log(results[0].formatted_address);
-                            infowindow.setContent(results[0].formatted_address);
-                            infowindow.open(map, marker);
-                        } else {
-                            window.alert("No results found");
-                        }
-                    } else {
-                        window.alert("Geocoder API failed due to: " + status);
-                    }
-                });
-                document.getElementById("lat").value = marker.position.lat();
-                document.getElementById("lon").value = marker.position.lng();
-                console.log("lat: " + marker.position.lat());
-                console.log("lng: " + marker.position.lng());
-            });
-            google.maps.event.addDomListener(window, 'load', initMap(latitude, longitude));
-
-            google.maps.event.addListener(map, 'click', function (event) {
-                newLocation(event.myCenter);
-            });
+            google.maps.event.addDomListener(window, 'load', initMap());
 
             // Zoom to 10 when clicking on marker
             google.maps.event.addListener(marker, 'click', function () {
                 map.setZoom(10);
                 map.setCenter(marker.getPosition());
+
+            });
+
+            google.maps.event.addListener(marker, 'dragstart', function () {
+                infowindow.close();
+            });
+
+            // when dragend, show new lat and lon in console
+            google.maps.event.addListener(marker, 'dragend', function () {
+                document.getElementById("geolocation").disabled = false;
+                marker.setAnimation(google.maps.Animation.BOUNCE);
+                uluru = marker.getPosition();
+                infowindow.close();
+                infowindow.setContent("&#127926 I wonder where I am...");
+                infowindow.open(map, marker);
+
+                document.getElementById("lat").value = marker.position.lat();
+                document.getElementById("lon").value = marker.position.lng();
+                console.log("lat: " + marker.position.lat());
+                console.log("lng: " + marker.position.lng());
 
             });
 
@@ -144,20 +138,27 @@
 <body>
 
     <script>
+        function wait(ms) {
+            var start = new Date().getTime();
+            var end = start;
+            while (end < start + ms) {
+                end = new Date().getTime();
+            }
+        }
 
         // Initialize and add the map
         function initMap() {
-            // The location of Uluru
+            // The location of park
             uluru = { lat: latitude, lng: longitude };
 
             var mapOptions = {
                 center: uluru,
-                zoom: 12,
+                zoom: 14,
                 controlSize: 24,
                 streetViewControl: false,
                 fullscreenControl: false,
             };
-            // The map, centered at Uluru
+            // The map, centered at park
             map = new google.maps.Map(document.getElementById('map'), mapOptions);
             marker = new google.maps.Marker({
                 position: uluru,
@@ -166,74 +167,62 @@
             });
             marker.setMap(map);
 
+            marker.setAnimation(google.maps.Animation.DROP);
+            wait(200);
+            marker.addListener('dragstart', toggleBounce2);
             geocoder = new google.maps.Geocoder();
             infowindow = new google.maps.InfoWindow();
-            geocoder.geocode({ location: uluru }, (results, status) => {
+            infowindow.setContent("Drag Me!");
+            infowindow.open(map, marker);
+            document.getElementById("send").addEventListener("click", () => {
+                wait(600);
+                geocodeLatLng(geocoder, map, infowindow);
+            });
+        }
+
+        function toggleBounce2() {
+            infowindow.close();
+            console.log("yes");
+            infowindow.setContent("Yaay!");
+            infowindow.open(map, marker);
+
+            marker.setAnimation(null);
+
+        }
+
+        function geocodeLatLng(geocoder, map, infowindow, marker) {
+            const latlng = {
+                lat: parseFloat(document.getElementById("lat").value),
+                lng: parseFloat(document.getElementById("lon").value)
+            };
+            geocoder.geocode({ location: latlng }, (results, status) => {
                 if (status === "OK") {
                     if (results[0]) {
-                        map.setZoom(14);
+                        newLocation(latlng.lat, latlng.lng);
+                        map.setZoom(11);
                         console.log(results[0].formatted_address);
-                        infowindow.setContent("Drag me!");
-                        infowindow.open(map, marker);
+                        infowindow.setContent(results[0].formatted_address);
                     } else {
                         window.alert("No results found");
                     }
                 } else {
                     window.alert("Geocoder API failed due to: " + status);
                 }
+                google.maps.event.trigger(map, 'resize');
             });
         }
 
         function newLocation(newLat, newLng) {
-            uluru.lat = newLat;
-            uluru.lng = newLng;
+            marker.setPosition(new google.maps.LatLng(newLat, newLng));
             map.setCenter({
                 lat: newLat,
                 lng: newLng
             });
         }
 
-
-        function myFunction() {
-            latitude = parseFloat(document.getElementById("lat").value);
-            longitude = parseFloat(document.getElementById("lon").value);
-            document.getElementById("lat").value = latitude;
-            document.getElementById("lon").value = longitude;
-            uluru.lat = latitude;
-            uluru.lng = longitude;
-            map.setCenter({
-                lat: latitude,
-                lng: longitude
-            });
-            marker.setMap(null);
-            marker = new google.maps.Marker({
-                position: uluru,
-                map: map,
-                draggable: true,
-                title: "Drag me!"
-            });
-            marker.setMap(map);
-            geocoder.geocode({ location: uluru }, (results, status) => {
-                if (status === "OK") {
-                    if (results[0]) {
-                        map.setZoom(11);
-                        console.log(results[0].formatted_address);
-                        infowindow.setContent(results[0].formatted_address);
-                        marker.title = results[0].formatted_address;
-                        infowindow.open(map, marker);
-                    } else {
-                        window.alert("No results found");
-                    }
-                } else {
-                    window.alert("Geocoder API failed due to: " + status);
-                }
-            });
-            document.getElementById("lat").value = marker.position.lat();
-            document.getElementById("lon").value = marker.position.lng();
-
-        }
-
         function getLocation() {
+
+            document.getElementById("geolocation").disabled = true;
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(showPosition);
             } else {
@@ -242,75 +231,64 @@
         }
 
         function showPosition(position) {
-            latitude = position.coords.latitude;
-            longitude = position.coords.longitude;
-            document.getElementById("lat").value = latitude;
-            document.getElementById("lon").value = longitude;
-            map.setCenter({
-                lat: latitude,
-                lng: longitude
-            });
-            uluru.lat = latitude;
-            uluru.lng = longitude;
-            console.log(uluru.lat);
-            marker.setMap(null);
-            marker = new google.maps.Marker({
-                position: uluru,
-                map: map,
-                draggable: true,
-                title: "Drag me!"
-            });
-            marker.setMap(map);
-            geocoder.geocode({ location: uluru }, (results, status) => {
-                if (status === "OK") {
-                    if (results[0]) {
-                        map.setZoom(14);
-                        console.log(results[0].formatted_address);
-                        infowindow.setContent("Drag me!");
-                        infowindow.open(map, marker);
-                    } else {
-                        window.alert("No results found");
-                    }
-                } else {
-                    window.alert("Geocoder API failed due to: " + status);
-                }
-            });
-            console.log(marker.position.lat);
+            var dummyLoc = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            document.getElementById("lat").value = position.coords.latitude;
+            document.getElementById("lon").value = position.coords.longitude;
+
+            newLocation(dummyLoc.lat, dummyLoc.lng);
+            google.maps.event.trigger(map, 'resize');
+            infowindow.setContent("wow");
+            marker.setAnimation(google.maps.Animation.DROP);
+            wait(200);
+
         }
     </script>
     <div class="container mt-5" style="max-width: 800px">
 
-        <h3 class="text-center mb-5">Fun with Google Maps</h3>
+        <h3 class="text-center mb-5">🦊 Fox on the Run</h3>
         <div id="map"></div>
         <form id="mainform" onsubmit="return false">
             <div class="form-group">
                 <br>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text" id="inputGroup-sizing-sm">Latitude &nbsp&nbsp</span>
+                <br>
+                <div class="container">
+                    <div class="row justify-content-md-center align-items-center">
+                        <div class="col">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" id="inputGroup-sizing-sm">Latitude &nbsp&nbsp</span>
+                                </div>
+                                <input class="form-control" id="lat" name="lat" placeholder="e.g. 47.619144"
+                                    value="47.619144">
+                            </div>
+                            <br>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" id="inputGroup-sizing-sm">Longitude</span>
+                                </div>
+                                <input class="form-control" id="lon" name="lon" placeholder="e.g. -122.281720"
+                                    value="-122.281720">
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label> or use &nbsp&nbsp&nbsp&nbsp</label>
+                            <button onclick="getLocation()" class="btn btn-primary btn-success" name="geolocation"
+                                id="geolocation"><i class="fas fa-map-marker-alt"> Geolocation</i></button>
+                        </div>
                     </div>
-                    <input class="form-control" id="lat" name="lat" placeholder="e.g. 47.619144" value="47.619144">
                 </div>
                 <br>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text" id="inputGroup-sizing-sm">Longitude</span>
-                    </div>
-                    <input class="form-control" id="lon" name="lon" placeholder="e.g. -122.281720" value="-122.281720">
-                </div>
-                <br>
+                <hr>
                 <br>
                 <div class="btn-toolbar justify-content-around" role="toolbar">
                     <div class="btn-group mr-2" role="group" aria-label="First group">
-                        <button onclick="myFunction()" class="btn btn-info" name="send" id="send" disabled><i
-                                class="fas fa-map-marked-alt"> Pin</i></button>
-                    </div>
-                    <div class="btn-group mr-2" role="group" aria-label="Second group">
-                        <button onclick="getLocation()" class="btn btn-primary btn-success" name="geolocation"
-                            id="geolocation"><i class="fas fa-map-marker-alt"> Geolocation</i></button>
+                        <button class="btn btn-info btn-lg" name="send" id="send"><i class="fas fa-map-marked-alt">
+                                Pin</i></button>
                     </div>
                 </div>
-            </div>
         </form>
     </div>
 </body>
