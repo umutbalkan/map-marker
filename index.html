@@ -27,7 +27,10 @@
         var marker;
         var geocoder;
         var infowindow;
-
+        var cityname;
+        var citymarker;
+        var straightline;
+        var marker_distance;
 
         $('#main').submit(function () {
             return false;
@@ -47,14 +50,14 @@
 
         $.validator.setDefaults({
             highlight: function (element) {
-                if (element.id == "lat") {
+                if (element.id === "lat") {
                     $(element).closest('.form-group').find(".form-control:first").addClass('is-invalid');
                 } else {
                     $(element).closest('.form-group').find(".form-control:last").addClass('is-invalid');
                 }
             },
             unhighlight: function (element) {
-                if (element.id == "lat") {
+                if (element.id === "lat") {
                     $(element).closest('.form-group').find(".form-control:first").removeClass('is-invalid');
                     $(element).closest('.form-group').find(".form-control:first").addClass('is-valid');
                 } else {
@@ -73,7 +76,9 @@
                 }
             }
         });
+
         $(document).ready(function () {
+
             $('#mainform').validate({ // initialize the plugin
                 rules: {
                     lat: {
@@ -99,13 +104,6 @@
             });
 
             google.maps.event.addDomListener(window, 'load', initMap());
-
-            // Zoom to 10 when clicking on marker
-            google.maps.event.addListener(marker, 'click', function () {
-                map.setZoom(10);
-                map.setCenter(marker.getPosition());
-
-            });
 
             google.maps.event.addListener(marker, 'dragstart', function () {
                 infowindow.close();
@@ -163,33 +161,73 @@
             marker = new google.maps.Marker({
                 position: uluru,
                 map: map,
-                draggable: true, // set marker draggable
+                draggable: true,
+                icon: {
+                    url: "./fox.png"
+                }
             });
             marker.setMap(map);
-
             marker.setAnimation(google.maps.Animation.DROP);
-            wait(200);
             marker.addListener('dragstart', toggleBounce2);
+
+            cityuluru = { lat: 47.751100, lng: -120.740100 };
+            citymarker = new google.maps.Marker({
+                position:  cityuluru,
+                map: map,
+                icon: {
+                    url: "http://maps.google.com/mapfiles/kml/pal2/icon2.png"
+                }  
+            });
+            citymarker.setMap(map);
+
+
+
             geocoder = new google.maps.Geocoder();
             infowindow = new google.maps.InfoWindow();
             infowindow.setContent("Drag Me!");
             infowindow.open(map, marker);
+
+            // Draw a line showing the straight distance between the markers
+            //var line = new google.maps.Polyline({ path: [marker.getPosition(), citymarker.getPosition()], map: map });
+
             document.getElementById("send").addEventListener("click", () => {
-                wait(600);
+                wait(100);
                 geocodeLatLng(geocoder, map, infowindow);
             });
         }
 
+
+
+
+
         function toggleBounce2() {
-            infowindow.close();
-            console.log("yes");
             infowindow.setContent("Yaay!");
-            infowindow.open(map, marker);
 
             marker.setAnimation(null);
 
         }
 
+        // Geocoding
+        function geocodeAddress(geocoder, resultsMap) {
+            const address = cityname;
+            geocoder.geocode({ address: address }, (results, status) => {
+                if (status === "OK") {
+                    resultsMap.setCenter(results[0].geometry.location);
+                    citymarker.setPosition(results[0].geometry.location);
+                    marker_distance = google.maps.geometry.spherical.computeDistanceBetween(marker.getPosition(), citymarker.getPosition()) / 1000;
+                    console.log(marker_distance.toFixed(2));
+                    infowindow.setContent("I'm at " + cityname + "\n" + "and city center is " + marker_distance.toFixed(2) + " km away.");
+                } else {
+                    alert("Geocode was not successful for the following reason: " + status);
+                }
+            });
+
+            // Draw a line showing the straight distance between the markers
+            straightline = new google.maps.Polyline({ path: [marker,  citymarker], map: map })
+            google.maps.event.trigger(map, 'resize');
+        }
+
+        // Reverse Geocoding
         function geocodeLatLng(geocoder, map, infowindow, marker) {
             const latlng = {
                 lat: parseFloat(document.getElementById("lat").value),
@@ -201,7 +239,11 @@
                         newLocation(latlng.lat, latlng.lng);
                         map.setZoom(11);
                         console.log(results[0].formatted_address);
-                        infowindow.setContent(results[0].formatted_address);
+                        for (var i in results[0].address_components) {
+                            if (results[0].address_components[i].types[0] === "administrative_area_level_1") {
+                                cityname = results[0].address_components[i].long_name;
+                            }
+                        }
                     } else {
                         window.alert("No results found");
                     }
@@ -209,6 +251,7 @@
                     window.alert("Geocoder API failed due to: " + status);
                 }
                 google.maps.event.trigger(map, 'resize');
+                geocodeAddress(geocoder, map, infowindow);
             });
         }
 
@@ -248,7 +291,8 @@
     </script>
     <div class="container mt-5" style="max-width: 800px">
 
-        <h3 class="text-center mb-5">🦊 {Fox on the Run}</Fox></h3>
+        <h3 class="text-center mb-5">🦊 {fox on the run}</Fox>
+        </h3>
         <div id="map"></div>
         <form id="mainform" onsubmit="return false">
             <div class="form-group">
@@ -275,7 +319,7 @@
                         </div>
                         <div class="col">
                             <label> or use &nbsp&nbsp&nbsp&nbsp</label>
-                            <button onclick="getLocation()" class="btn btn-primary btn-success" name="geolocation"
+                            <button onclick="getLocation()" class="btn btn-primary btn btn-warning" name="geolocation"
                                 id="geolocation"><i class="fas fa-map-marker-alt"> Geolocation</i></button>
                         </div>
                     </div>
@@ -285,12 +329,15 @@
                 <br>
                 <div class="btn-toolbar justify-content-around" role="toolbar">
                     <div class="btn-group mr-2" role="group" aria-label="First group">
-                        <button class="btn btn-info btn-lg" name="send" id="send"><i class="fas fa-map-marked-alt">
-                                Pin</i></button>
+                        <button class="btn btn-info btn-lg" name="send" id="send"><i class="fas fa-hand-paper">
+                                Stop</i></button>
                     </div>
                 </div>
         </form>
     </div>
+    <script>
+        // todo here
+    </script>
 </body>
 
 </html>
