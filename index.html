@@ -255,7 +255,7 @@
             const address = cityname + " " + countryname;
             console.log(address);
             geocoder.geocode({ address: address }, (results, status) => {
-                if (status === "OK") {
+                if (status === "OK" && citymarker !== null && countryname !==null) {
                     citymarker.setMap(rmap);
                     citymarker.setPosition(results[0].geometry.location);
                     //Draw a line between the markers
