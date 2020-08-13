@@ -36,6 +36,7 @@
         var marker_distance;
         var elevator;
         var elevation_result;
+        var countryname;
 
         const lineSymbol = {
             path: "M 0,-1 0,1",
@@ -54,7 +55,7 @@
         }, 'Your Latitude format has error.')
 
         $.validator.addMethod('longCoord', function (value, element) {
-        // console.log(this.optional(element))
+            // console.log(this.optional(element))
             return this.optional(element) ||
                 /^(?=.)-?((0?[8-9][0-9])|180|([0-1]?[0-7]?[0-9]))?(?:\.[0-9]{1,20})?$/.test(value);
         }, 'Your Longitude format has error.')
@@ -192,14 +193,17 @@
                 displayLocationElevation(marker.getPosition(), elevator, infowindow);
                 console.log(elevation_result + "- init map");
                 geocodeLatLng(geocoder, map, infowindow, cityname, straightline, marker, citymarker, lines,);
-                
+
             });
 
 
             google.maps.event.addListener(marker, 'dragstart', function () {
+                if (lines[0] != null) {
+                    lines[0].setMap(null);
+                }
+
+                lines.pop();
                 console.log("drag-start");
-                infowindow.open();
-                infowindow.setContent("Yaay!");
                 marker.setAnimation(null);
             });
 
@@ -231,27 +235,24 @@
                 if (status === 'OK') {
                     // Retrieve the first result
                     if (results[0]) {
-                        elevation_result =  results[0].elevation;
+                        elevation_result = results[0].elevation;
                         console.log("elev service: " + elevation_result);
                     } else {
                         window.alert("No results found");
                     }
                 } else {
-                    window.alert("Elevation Service failed due to:" + status);
+                    window.alert("Elevation API failed due to:" + status);
                 }
             });
         }
 
         // Geocoding
-        function geocodeAddress(geocoder, rmap, infowindow, cityname, straightline, citymarker, lines) {
-            const address = cityname;
+        function geocodeAddress(geocoder, rmap, infowindow, cityname, straightline, citymarker, lines, countryname) {
+            const address = cityname + " " + countryname;
+            console.log(address);
             geocoder.geocode({ address: address }, (results, status) => {
                 if (status === "OK") {
                     citymarker.setPosition(results[0].geometry.location);
-
-                    lines[0].setMap(null);
-                    lines.pop();
-
                     //Draw a line between the markers
                     lines[0] = new google.maps.Polyline({
                         icons: [
@@ -273,7 +274,9 @@
                     infowindow.setContent("I'm at " + cityname + "\n" + "and city center is " + marker_distance.toFixed(2) + " km away.<br>The elevation is " + elevation_result.toFixed(1) + " m.");
                     blin(marker_distance, cityname, elevation_result);
                 } else {
-                    alert("Reverse Geocode was not successful for the following reason: " + status);
+                    infowindow.close(); infowindow
+                    infowindow.setContent("I shouldn't be here.");
+                    alert("Reverse Geocoder API failed due to: " + status);
                 }
             });
 
@@ -294,16 +297,25 @@
                         for (var i in results[0].address_components) {
                             if (results[0].address_components[i].types[0] === "administrative_area_level_1") {
                                 cityname = results[0].address_components[i].long_name;
+                                break;
                             }
                         }
+                        for (var i in results[0].address_components) {
+                            if (results[0].address_components[i].types[0] === "country") {
+                                countryname = results[0].address_components[i].long_name;
+                                break;
+                            }
+                        }
+
+                        geocodeAddress(geocoder, map, infowindow, cityname, straightline, citymarker, lines, countryname);
                     } else {
                         window.alert("No results found");
                     }
                 } else {
+                    infowindow.setContent("I shouldn't be here.");
                     window.alert("Geocoder API failed due to: " + status);
                 }
                 google.maps.event.trigger(map, 'resize');
-                geocodeAddress(geocoder, map, infowindow, cityname, straightline, citymarker, lines);
             });
         }
 
@@ -347,11 +359,11 @@
             var element = document.getElementById("mainform");
             element.appendChild(para);
             para = document.getElementById("location");
-            para.innerHTML= "Location: " + cityname;
+            para.innerHTML = "Location: " + cityname;
             element = document.getElementById("mainform");
             element.appendChild(para);
             para = document.getElementById("elevation");
-            para.innerHTML= "Elevation: " + elevation_result.toFixed(1) + " m";
+            para.innerHTML = "Elevation: " + elevation_result.toFixed(1) + " m";
             element = document.getElementById("mainform");
             element.appendChild(para);
         }
