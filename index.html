@@ -49,13 +49,11 @@
         });
 
         $.validator.addMethod('latCoord', function (value, element) {
-            //console.log(this.optional(element))
             return this.optional(element) ||
                 /^(?=.)-?((8[0-5]?)|([0-7]?[0-9]))?(?:\.[0-9]{1,20})?$/.test(value);
         }, 'Your Latitude format has error.')
 
         $.validator.addMethod('longCoord', function (value, element) {
-            // console.log(this.optional(element))
             return this.optional(element) ||
                 /^(?=.)-?((0?[8-9][0-9])|180|([0-1]?[0-7]?[0-9]))?(?:\.[0-9]{1,20})?$/.test(value);
         }, 'Your Longitude format has error.')
@@ -189,6 +187,7 @@
             });
 
             document.getElementById("send").addEventListener("click", () => {
+                citymarker.setMap(null);
                 //myline.setVisible(false);
                 displayLocationElevation(marker.getPosition(), elevator, infowindow);
                 console.log(elevation_result + "- init map");
@@ -241,7 +240,7 @@
                         window.alert("No results found");
                     }
                 } else {
-                    window.alert("Elevation API failed due to:" + status);
+                    console.log("Elevation API failed due to:" + status);
                 }
             });
         }
@@ -252,6 +251,7 @@
             console.log(address);
             geocoder.geocode({ address: address }, (results, status) => {
                 if (status === "OK") {
+                    citymarker.setMap(rmap);
                     citymarker.setPosition(results[0].geometry.location);
                     //Draw a line between the markers
                     lines[0] = new google.maps.Polyline({
@@ -274,9 +274,8 @@
                     infowindow.setContent("I'm at " + cityname + "\n" + "and city center is " + marker_distance.toFixed(2) + " km away.<br>The elevation is " + elevation_result.toFixed(1) + " m.");
                     blin(marker_distance, cityname, elevation_result);
                 } else {
-                    infowindow.close(); infowindow
-                    infowindow.setContent("I shouldn't be here.");
-                    alert("Reverse Geocoder API failed due to: " + status);
+                    infowindow.setContent("&#128533 I shouldn't be here.");
+                    console.log("Reverse Geocoder API failed due to: " + status);
                 }
             });
 
@@ -312,8 +311,8 @@
                         window.alert("No results found");
                     }
                 } else {
-                    infowindow.setContent("I shouldn't be here.");
-                    window.alert("Geocoder API failed due to: " + status);
+                    infowindow.setContent("&#128533 I shouldn't be here.");
+                    console.log("Geocoder API failed due to: " + status);
                 }
                 google.maps.event.trigger(map, 'resize');
             });
