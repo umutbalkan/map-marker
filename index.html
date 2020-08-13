@@ -37,6 +37,7 @@
         var elevator;
         var elevation_result;
         var countryname;
+        var full_address;
 
         const lineSymbol = {
             path: "M 0,-1 0,1",
@@ -209,6 +210,7 @@
 
             // when dragend, show new lat and lon in console
             google.maps.event.addListener(marker, 'dragend', function () {
+
                 document.getElementById("geolocation").disabled = false;
                 marker.setAnimation(google.maps.Animation.BOUNCE);
                 uluru = marker.getPosition();
@@ -220,6 +222,9 @@
                 document.getElementById("lon").value = marker.position.lng();
                 console.log("lat: " + marker.position.lat());
                 console.log("lng: " + marker.position.lng());
+                document.getElementById("lat").focus();
+                document.getElementById("lon").focus();
+                document.getElementById("lon").blur();
 
             });
         }
@@ -292,6 +297,7 @@
                     if (results[0]) {
                         newLocation(latlng.lat, latlng.lng);
                         map.setZoom(11);
+                        full_address = results[0].formatted_address;
                         console.log(results[0].formatted_address);
                         for (var i in results[0].address_components) {
                             if (results[0].address_components[i].types[0] === "administrative_area_level_1") {
@@ -301,7 +307,7 @@
                         }
                         for (var i in results[0].address_components) {
                             if (results[0].address_components[i].types[0] === "country") {
-                                countryname = results[0].address_components[i].long_name;
+                                countryname = results[0].address_components[i].short_name;
                                 break;
                             }
                         }
