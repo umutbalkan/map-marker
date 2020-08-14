@@ -38,6 +38,7 @@
         var elevation_result;
         var countryname;
         var full_address;
+        var earth_radius = 6371;
 
         const lineSymbol = {
             path: "M 0,-1 0,1",
@@ -273,7 +274,8 @@
                     //console.log((marker_distance / 1000).toFixed(2));
                     console.log("in geocode: " + elevation_result);
                     wait(300);
-                    infowindow.setContent("I'm at " + cityname + "\n" + "and city center is " + marker_distance.toFixed(2) + " km away.<br>The elevation is " + elevation_result.toFixed(1) + " m.");
+                    var core = ((6371 + parseFloat(elevation_result.toFixed(2)))/1000).toFixed(3);
+                    infowindow.setContent("I'm at " + cityname + "\n" + "and city center is " + marker_distance.toFixed(2) + " km away.<br>The elevation is " + elevation_result.toFixed(1) + " m.<br>" + "Earth's core is: " + core  + " km away.");
                     blin(marker_distance, cityname, elevation_result);
                 } else {
                     infowindow.setContent("&#128533 I shouldn't be here.");
