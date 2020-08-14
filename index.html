@@ -45,6 +45,7 @@
             scale: 4
         };
 
+        // JQUERY VALIDATION
         $('#main').submit(function () {
             return false;
         });
@@ -114,10 +115,6 @@
                     $('button.btn-info').prop('disabled', 'disabled');
                 }
             });
-
-            // google.maps.event.addDomListener(window, 'load', initMap());
-
-
 
         });
 
@@ -229,7 +226,7 @@
             });
         }
 
-        // Elevation
+        // Elevation API
         function displayLocationElevation(location, elevator, infowindow) {
             // Initiate the location request
             elevator.getElevationForLocations({
@@ -250,7 +247,7 @@
             });
         }
 
-        // Geocoding
+        // Geocoding API
         function geocodeAddress(geocoder, rmap, infowindow, cityname, straightline, citymarker, lines, countryname) {
             const address = cityname + " " + countryname;
             console.log(address);
@@ -285,8 +282,7 @@
             });
 
         }
-        //google.maps.event.trigger(map, 'resize');
-        // Reverse Geocoding
+        // Reverse Geocoding API
         function geocodeLatLng(geocoder, map, infowindow, cityname, straightline, marker, citymarker, lines) {
             const latlng = {
                 lat: parseFloat(document.getElementById("lat").value),
@@ -324,6 +320,7 @@
             });
         }
 
+        // Helper Functions
         function newLocation(newLat, newLng) {
             marker.setPosition(new google.maps.LatLng(newLat, newLng));
             map.setCenter({
@@ -358,6 +355,7 @@
             wait(200);
         }
 
+        // Display location information on HTML
         function blin(marker_distance, cityname, elevation_result) {
             var para = document.getElementById("distance");
             para.innerHTML = "Distance: " + marker_distance.toFixed(2) + " km";
@@ -382,12 +380,7 @@
 </head>
 
 <body>
-
-    <script>
-
-    </script>
     <div class="container mt-5" style="max-width: 800px">
-
         <h3 class="text-center mb-5">🦊 {fox on the run}</Fox>
         </h3>
         <div id="map"></div>
@@ -435,9 +428,6 @@
                 <p class="h6" id=elevation></p>
         </form>
     </div>
-    <script>
-        // todo here
-    </script>
 </body>
 
 </html>
